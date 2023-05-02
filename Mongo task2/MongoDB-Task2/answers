@@ -1,0 +1,293 @@
+ANSWERS:
+
+1. db.topics.aggregate([
+    {$project :{'topic_name': 1,'date': '$date','month' : {$month: '$date'},
+    'year': {$year: '$date'},}},
+    {$match:{'month': 10,'year': 2020}},
+    {$project:{'topic_name': 1,'date': 1}}])
+
+2. db.drives.aggregate([
+	    {$project:{'drive_name': '$dirve_name','date': 1,
+                                       'day': { $dayOfMonth : '$date'},
+                                       'month': {$month : '$date'},
+                                       'year': {$year: '$date'}}},
+	    {$match: {'year':{$eq : 2020}, 'month':{$eq : 10},
+	                        'day': {$gte: 15,$lte:31}}},
+	    {$project: {'drive_name': 1,'date': 1}}])
+
+3. db.drives.aggregate([
+    {$lookup: {from: 'users',
+       localField: 'user_ids',
+       foreignField: 'userdId',
+       as: 'res'}}])	
+
+4. db.codekata.aggregate([
+    { $lookup:{
+            from: 'users',
+            localField: 'userId',
+            foreignField: 'userdId',
+            as: 'user_details'}},
+    { $project: { 
+            'name' : '$user_details.name',
+            'problems_solved': '$problemsSolved'}}])
+
+5. db.mentors.aggregate([
+    { $lookup: {
+            from: 'users',
+            localField: 'mentor_id',
+            foreignField: 'userdId',
+            as: 'mentor_details'}},
+    { $project: {
+            'mentor_name': '$mentor_details.name',
+            'mentees_count': {$size: '$mentee_ids'}}},
+    { $match: {'mentees_count': {$gte: 15}}}])
+
+6. db.attendance.aggregate([
+    { $lookup:{
+            from: 'tasks',
+            localField: 'userId',
+            foreignField: 'user_id',
+            as: 'userTasks'}},
+    { $match: {
+            'userTasks.submission_date': {
+                $gte: ISODate("2020-10-15T00:00:00Z"),
+                $lte: ISODate("2020-11-01T00:00:00Z"),},
+            'status': 'absent'}},
+    { $lookup: {
+            from: 'users',
+            localField: 'userId',
+            foreignField: 'userdId',
+            as: 'userDetails'}},
+    { $project: {
+            'userDetails': {$arrayElemAt: ["$userDetails", 0]},
+            'taskDetails': {$arrayElemAt: ["$userTasks", 0]},
+            'status': 1}},
+    { $project: {
+            'Name': "$userDetails.name",
+            'Task Name': '$taskDetails.task_name',
+            'status': 1,
+            'Submission date': '$taskDetails.submission_date',}}])
+
+1.Users Collection:
+db.users.insertMany([{
+    'userId': 1,
+    'name': 'Nancy',
+    'email': 'nancy@gmail.com',
+    'mobile': '000-000-0000',
+    'password':'harith@0318'
+},
+{
+    'userId': 2,
+    'name': 'Cathy',
+    'email': 'cathy@gmail.com',
+    'mobile': '000-000-0000',
+    'password':'harith@0318'
+},
+{
+    'userId': 3,
+    'name': 'Alena',
+    'email': 'alena@gmail.com',
+    'mobile': '000-000-0000',
+    'password':'harith@0318'
+},
+{
+    'userId': 4,
+    'name': 'Bency',
+    'email': 'bency@gmail.com',
+    'mobile': '000-000-0000',
+    'password':'harith@0318'
+},
+{
+    'userId': 5,
+    'name': 'Haritha',
+    'email': 'haritha@gmail.com',
+    'mobile': '000-000-0000',
+    'password':'harith@0318'
+}
+])
+
+2. Codekata Collection:
+db.codekata.insertMany([{
+    'userId': 1,
+    'problemSolved' :120,
+    'rank': 3000,
+    'geekoins':2500
+},
+{
+    'userId': 2,
+    'problemSolved' :220,
+    'rank': 2000,
+    'geekoins':4500
+},
+{
+    'userId': 3,
+    'problemSolved' :320,
+    'rank': 1000,
+    'geekoins':7500
+},
+{
+    'userId': 4,
+    'problemSolved' :520,
+    'rank': 400,
+    'geekoins':11500
+},
+{
+    'userId': 5,
+    'problemSolved' :720,
+    'rank': 100,
+    'geekoins':16500
+}
+])
+
+3.Attendance Collection:
+db.attendance.insertMany([{
+    'userId': 1,
+    'date' : new Date("2020-10-15"),
+    'status': 'absent',
+},
+{
+    'userId': 2,
+    'date' : new Date("2020-10-15"),
+    'status': 'present',
+},
+{
+    'userId': 3,
+    'date' : new Date("2020-10-15"),
+    'status': 'absent',
+},
+{
+    'userId': 4,
+    'date' : new Date("2020-10-15"),
+    'status': 'prsent',
+},
+{
+    'userId': 5,
+    'date' : new Date("2020-10-15"),
+    'status': 'present',
+}
+])
+
+4.Mentors Collection:
+db.mentors.insertMany([{
+    'mentor_id': 5,
+    'mentee_ids':[1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]
+},
+{
+    'mentor_id': 6,
+    'mentee_ids':[1,2,3,4]
+},
+{
+    'mentor_id': 7,
+    'mentee_ids':[1]
+},
+{
+    'mentor_id': 8,
+    'mentee_ids':[1,2,3]
+},
+{
+    'mentor_id': 9,
+    'mentee_ids':[1,2,3,4,5,6,7,8]
+}
+])
+
+5.Tasks Collection:
+db.tasks.insertMany([{
+    'user_id': 1,
+    'task_name' : 'TV application design',
+    'date' : new Date("2020-10-15"),
+    'submission_date' : new Date("2020-10-21")
+},
+{
+    'user_id': 2,
+    'task_name' : 'TV application design',
+    'date' : new Date("2020-10-15"),
+    'submission_date' : new Date("2020-10-15")
+},
+{
+    'user_id': 3,
+    'task_name' : 'TV application design',
+    'date' : new Date("2020-10-15"),
+    'submission_date' : new Date("2020-10-15")
+},
+{
+    'user_id': 4,
+    'task_name' : 'TV application design',
+    'date' : new Date("2020-10-15"),
+    'submission_date' : new Date("2020-10-15")
+},
+{
+    'user_id': 5,
+    'task_name' : 'TV application design',
+    'date' : new Date("2020-10-15"),
+    'submission_date' : new Date("2020-10-15")
+}
+])
+
+6.Company Drive Collection:
+db.company_drives.insertMany([
+{
+    'drive_id': 1,
+    'drive_name' : 'google',
+    'users_ids': [1,2,3,4],
+    'date' : new Date("2020-10-15")
+},
+{
+    'drive_id': 2,
+    'drive_name' : 'hotstar',
+    'users_ids': [1,2],
+    'date' : new Date("2020-10-15")
+},
+{
+    'drive_id': 3,
+    'drive_name' : 'microsoft',
+    'users_ids': [1,2,3],
+    'date' : new Date("2020-10-15")
+},
+{
+    'drive_id': 4,
+    'drive_name' : 'amazon',
+    'users_ids': [4,5],
+    'date' : new Date("2020-10-15")
+},
+{
+    'drive_id': 5,
+    'drive_name' : 'redbus',
+    'users_ids': [1,2,3,4],
+    'date' : new Date("2020-10-15")
+}
+])
+
+7.Topics Collection:
+db.topics.insertMany([{
+    'topic_id': 1,
+    'topic_name' : 'Javascript-functions',
+    'tasks': ['arrow-functions','inline-functions','IIFE'],
+    'date' : new Date("2020-10-15")
+},
+{
+    'topic_id': 2,
+    'topic_name' : 'Javascript-variables',
+    'tasks': ['var','let'],
+    'date' : new Date("2020-10-15")
+},
+{
+    'topic_id': 3,
+    'topic_name' : 'Javascript-events',
+    'tasks': ['event-bubbling','event-listeners'],
+    'date' : new Date("2020-10-15")
+},
+{
+    'topic_id': 4,
+    'topic_name' : 'mysql-crud',
+    'tasks': ['create-table','update-table','insert-table'],
+    'date' : new Date("2020-10-15")
+},
+{
+    'topic_id': 5,
+    'topic_name' : 'mongo',
+    'tasks': ['find','aggregate'],
+    'date' : new Date("2020-10-15")
+}
+])
+
+
